@@ -1,19 +1,110 @@
 #!/bin/bash
 
+SH_WAITING_FOR_MENU_CHOICE=true
+pause(){
+  read -p "Press [Enter] key to continue..." fackEnterKey
+}
+
+one(){
+	echo "one() called"
+    ZIPURL="https://github.com/Azure-Samples/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
+    SH_WAITING_FOR_MENU_CHOICE=false
+    pause
+}
+ 
+# do something in two()
+two(){
+	echo "Run the redis cache sample from bgfast"
+    ZIPURL="https://github.com/bgfast/containerapps-api-staticfile-javascript/archive/refs/heads/Redis.zip"
+    SH_WAITING_FOR_MENU_CHOICE=false
+    pause
+}
+ 
+# function to display menus
+show_menus() {
+	clear
+	echo "~~~~~~~~~~~~~~~~~~~~~"	
+	echo " M A I N - M E N U"
+	echo "~~~~~~~~~~~~~~~~~~~~~"
+	echo "1. Deploy PG Album API - C#"
+    echo "     Deploy GitHub PG sample: containerapps-albumapi-csharp"
+	echo "2. Reset Terminal"
+	echo "3. Exit"
+}
+# read input from the keyboard and take a action
+# invoke the one() when the user select 1 from the menu option.
+# invoke the two() when the user select 2 from the menu option.
+# Exit when user the user select 3 form the menu option.
+read_options(){
+    items=("PG-Album API (C#)" "BGFAST-HLS-Redis (nodejs)" "Item 3" "Item 4" "Show Full Menu" "Quit")
+
+    while $SH_WAITING_FOR_MENU_CHOICE; do
+        select item in "${items[@]}" 
+        do
+            case $REPLY in
+                1) echo "Selected item #$REPLY"; one; break;;
+                2) echo "Selected item #$REPLY which means $item"; two; break;;
+                3) echo "Selected item #$REPLY which means $item"; break;;
+                4) return 43; break;;
+                $((${#items[@]}+1))) echo "We're done!"; break 2;;
+                *) echo "Ooops - unknown choice $REPLY"; break;
+            esac
+        done
+    done
+	#local choice
+	#read -p "Enter choice [ 1 - 3] " choice
+	#case $choice in
+	#	1) one ;;
+	#	2) two ;;
+	#	3) exit 0;;
+	#	*) echo -e "${RED}Error...${STD}" && sleep 2
+	#esac
+}
+ 
+# ----------------------------------------------
+# Step #3: Trap CTRL+C, CTRL+Z and quit singles
+# ----------------------------------------------
+#trap '' SIGINT SIGQUIT SIGTSTP
+ 
+# -----------------------------------
+# Step #4: Main logic - infinite loop
+# ------------------------------------
+	read_options
+
+
+
+
 # to do list
 # change the font color to yellow for all verbose debug statements
 # Change the font to green for all information commands
 # specify the log analytics workspace name so it is consistent
 
-FILENAME="https://github.com/Azure-Samples/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
-mkdir ./containerapps-albumapi-csharp
-cd ./containerapps-albumapi-csharp
-#curl -sS http://foo.bar/filename.zip > file.zip
-curl -SL $FILENAME > file.zip
-unzip -d -o . file.zip 
-rm file.zip
-cd ./containerapps-albumapi-csharp-main/src
-pwd
+##FILENAME="https://github.com/Azure-Samples/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
+#ZIPURL="https://github.com/bgfast/containerapps-api-staticfile-javascript/archive/refs/heads/Redis.zip"
+##mkdir ./redis
+##cd ./redis
+##curl -sS http://foo.bar/filename.zip > file.zip
+#echo "Zip URL=$ZIPURL"
+#curl -SL $ZIPURL > file.zip
+#unzip -d . file.zip 
+##rm file.zip
+##cd ./containerapps-albumapi-csharp-main/src
+#pwd
+#########################
+
+#FILENAME="https://github.com/Azure-Samples/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
+#FILENAME="https://github.com/bgfast/containerapps-api-staticfile-javascript/archive/refs/heads/Redis.zip"
+##mkdir ./containerapps-albumapi-csharp
+##cd ./containerapps-albumapi-csharp
+##curl -sS http://foo.bar/filename.zip > file.zip
+#curl -SL $FILENAME > file.zip
+##unzip -d . file.zip 
+
+cd "C:\Users\brentgr\OneDrive - Microsoft\Projects\container-apps\containerapps-api-staticfile-javascript\src"
+
+############################
+#cd "C:\Users\brentgr\OneDrive - Microsoft\Projects\container-apps\containerapps-api-staticfile-javascript\src"
+
 
 : << 'COMMENT'
 Ideas for log levels
@@ -267,6 +358,24 @@ fi
 ##
 ##############################################
 
+
+
+##############################################
+##
+## Start Redis create 
+##
+#az redis list-keys [--ids]
+#                   [--name]
+#                   [--resource-group]
+#                   [--subscription]
+
+##
+## End Redis create
+##
+##############################################
+
+
+
 ##############################################
 ##
 ## Start Container App create 
@@ -282,8 +391,7 @@ if [[ $CONTAINER_APP = *$CONTAINER_APP_NAME* ]]
 then
     echo "The Azure Container APP already exists. Updating the Container APP..."
     # Create the container app and deploy the image
-    #az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME
-    THERESULT=$(az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME)
+    THERESULT=$(az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname)
     if [[ $THERESULT = *Succeeded* ]]
     then
         echo "Successfully updated container app"
@@ -312,14 +420,15 @@ fi
 ##
 
 API_BASE_URL=$(az containerapp show --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME --query properties.configuration.ingress.fqdn -o tsv)
-API_BASE_URL="https://$API_BASE_URL/albums"
+API_BASE_URL="https://$API_BASE_URL/orthopedicSurgeriesFromRedis"
 CURL_RESULT=$(curl $API_BASE_URL)
 #echo $CURL_RESULT
-if [[ $CURL_RESULT = *MegaDNS* ]]
+if [[ $CURL_RESULT = *Knee* ]]
 then
     echo "Successfully accessed the API $API_BASE_URL"
 else
     echo "Failed to access the API $API_BASE_URL"
+    echo $CURL_RESULT
 fi
 
 ##
@@ -327,4 +436,5 @@ fi
 ##
 ##############################################
 
-cd ../../..
+cd "C:\Users\brentgr\OneDrive - Microsoft\Projects\container-apps\demo-driver"
+# az containerapp update --name myapp --resource-group myresgroup --set-env-vars "DB_PASSWORD=secretref:db_password"
