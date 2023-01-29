@@ -4,6 +4,29 @@
 # change the font color to yellow for all verbose debug statements
 # Change the font to green for all information commands
 # specify the log analytics workspace name so it is consistent
+# when is exit used vs return? is return for a sourced script and exit for a script that is executed?
+
+
+# get the current working directory in a variable
+cwd=$(pwd)
+echo "Current working directory = $cwd"
+
+# Make sure the script is being sourced, not executed.
+#if [ "$0" == "$BASH_SOURCE" ]; then
+#    echo "This script must be sourced, not executed."
+#    exit 1
+#fi
+
+# Make sure we have the required command line arguments.
+#if [ $# -ne 1 ]; then
+#    echo "Usage: $0 directory"
+#    exit 1
+#fi
+
+# Create the directory if it doesn't exist.
+#if [ ! -d "$1" ]; then
+#    mkdir "$1"
+#fi
 
 echo "<H1>Visual Studio Code</H1>"
 echo "how to run the file. From the prompt type: $. ./cheetsheet-bash.sh"
@@ -22,6 +45,7 @@ echo "############################################"
 echo "## "
 echo "## Color fun"
 echo "## "
+
 
 
 : << 'COMMENT'
