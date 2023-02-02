@@ -4,6 +4,8 @@
 ### 1 
 # only download and unzip the file if the directory doesn't exist or if force flag is used
 ### 2
+# display the subscription name of the current subscription 
+# check for installed extensions in VS Code
 # code a better solution for the projects directory
 # create the redis service
 # Get the hostname and creds from the redis service
@@ -19,6 +21,8 @@
 # for the projects directory, make all new sample directories be siblings of the demo-driver directory
 # Cleanup all the command line output
 # Cleanup the menu choices
+### 3
+# read menu options and choice variable settings from a json file
 ##DONE## 
 # - use the loged in users name $USERNAME
 
