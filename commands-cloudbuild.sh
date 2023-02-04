@@ -175,42 +175,27 @@ read_options
 #pwd
 #########################
 
-#zzz
 ## if the directory does not exist, create it
-if [ ! -d "$SH_PROJECTS_ROOT$SH_PROJECT_ROOT" ]; then
-    #mkdir -p "$SH_PROJECTS_ROOT$SH_PROJECT_ROOT"
+#echo "$SH_PROJECTS_ROOT/$SH_PROJECT_ROOT" 
+if [ ! -d "$SH_PROJECTS_ROOT/$SH_PROJECT_ROOT" ]; then
     cd "$SH_PROJECTS_ROOT"
-    pause
-    #ZIPURL="https://github.com/bgfast/api-python/archive/refs/heads/master.zip"
-    echo "Zip URL=$ZIPURL"
+    #echo "Zip URL=$ZIPURL"
     curl -SL $ZIPURL > file.zip
-    echo "$SH_PROJECTS_ROOT"
-    echo "$SH_PROJECT_ROOT"
-    echo "$SH_ZIP_INSIDE_ROOT"
-    unzip -d "$SH_PROJECTS_ROOT" file.zip 
-    pause
-    mv "$SH_ZIP_INSIDE_ROOT" "$SH_PROJECT_ROOT" 
-    
-    # trying to unzip in the location I want - gave up and used the mv command instead
-    #unzip file.zip "api-python-master/**/*" -d "$SH_PROJECTS_ROOT$SH_PROJECT_ROOT"
-    # this still keeps the api-python-master folder.. 
-    #unzip file.zip "api-python-master/**/*" -d "$SH_PROJECTS_ROOT$SH_PROJECT_ROOT"
-
-    #unzip file.zip 'api-python-master/**/*' -d "$SH_PROJECTS_ROOT$SH_PROJECT_ROOT"
-    #unzip -j archive.zip "sub/dir/*" -d "dest/dir"
-    #unzip -j file.zip -d "$SH_PROJECTS_ROOT$SH_PROJECT_ROOT"
-    #unzip file.zip "/*" -d "$SH_PROJECTS_ROOT$SH_PROJECT_ROOT"
-    #unzip /path/to/archive.zip "in/archive/folder/*" -d "/path/to/unzip/to"
+    unzip -d "$TMP" file.zip 
+    #echo "mv $TMP/$SH_ZIP_INSIDE_ROOT $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT" 
+    mv "$TMP/$SH_ZIP_INSIDE_ROOT" "$SH_PROJECTS_ROOT/$SH_PROJECT_ROOT" 
     rm file.zip
+else
+    echo "Directory already exists: $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT skipping unzip"
 fi
 
-if [ ! -d "$SH_PROJECTS_ROOT\\$SH_PROJECT_ROOT\src" ]; then
-    echo "unzip failed to extract in the correct directory: $SH_PROJECTS_ROOT\\$SH_PROJECT_ROOT"
+
+if [ ! -d "$SH_PROJECTS_ROOT/$SH_PROJECT_ROOT/src" ]; then
+    echo "unzip failed to extract in the correct directory: $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT"
     return 42
 else
-    echo "Successfully unziped file in: $SH_PROJECTS_ROOT\\$SH_PROJECT_ROOT"
+    echo "Successfully unziped file in: $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT"
 fi
-
 
 #FILENAME="https://github.com/Azure-Samples/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
 #FILENAME="https://github.com/bgfast/containerapps-api-staticfile-javascript/archive/refs/heads/Redis.zip"
