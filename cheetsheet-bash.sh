@@ -28,6 +28,25 @@ echo "Current working directory = $cwd"
 #    mkdir "$1"
 #fi
 
+SH_A_BOOLEAN=true
+if [[ "$SH_A_BOOLEAN" = "true" ]] then
+  echo "SH_A_BOOLEAN is true 1"
+else
+    echo "SH_A_BOOLEAN is false 1"
+fi 
+if [ "$SH_A_BOOLEAN" = "true" ]; then
+  echo "SH_A_BOOLEAN is true 2"
+else
+    echo "SH_A_BOOLEAN is false 2"
+fi 
+# doesn't work
+#if (( $SH_A_BOOLEAN )) then
+#  echo "SH_A_BOOLEAN is true 2"
+#else
+#    echo "SH_A_BOOLEAN is false 2"
+#fi 
+return 0
+
 echo "<H1>Visual Studio Code</H1>"
 echo "how to run the file. From the prompt type: $. ./cheetsheet-bash.sh"
 echo "The . will 'source' the file. This means that the variables will be evaluated into the shell terminal. " 
