@@ -2,9 +2,18 @@
 
 # to do
 ### 1 
-# only download and unzip the file if the directory doesn't exist or if force flag is used
+# fix the redis var issue seen on Randy's machine
+# Create an OpenAI sample which shows generating a bash script. Hard code known examples of questions that return solid code
+# Create a Python example round trip for ocr, and classification, form recognizer
 ### 2
 # display the subscription name of the current subscription 
+# Make the RG unique for each sample
+# cleanup the rg is the api call succeeds 
+# what to do if you want to use a branch rather than the main branch
+# use git commands to fork and branch the repo
+# add version info to this script
+# split the zip section into a function and maybe a separate script. options are: zipurl, target directory for root, delete and overwrite directory contents, 
+# confirm the subscription name is correct
 # check for installed extensions in VS Code
 # code a better solution for the projects directory
 # create the redis service
@@ -25,6 +34,7 @@
 # read menu options and choice variable settings from a json file
 ##DONE## 
 # - use the loged in users name $USERNAME
+# only download and unzip the file if the directory doesn't exist or if force flag is used
 
 # Make sure the script is being sourced, not executed.
 if [ "$0" == "$BASH_SOURCE" ]; then
@@ -273,7 +283,7 @@ COMMENT
 #az provider register --namespace Microsoft.OperationalInsights
 
 #setup environment variables
-UNIQUE_ID="6"
+UNIQUE_ID="7"
 # Define a container registry name unique to you.
 ACR_NAME="$USERNAME$UNIQUE_ID"
 CUSERNAME=$ACR_NAME
@@ -385,7 +395,6 @@ else
         echo "$SH_ACRC"
         return 42
     fi
-    echo "$(tput setaf 2) Exiting the script. "
     CPASSWORD=$(az acr credential show -n $ACR_NAME --query passwords[0].value)
     
     # Strip the quotes off the password
@@ -517,7 +526,7 @@ if [[ $CONTAINER_APP = *$CONTAINER_APP_NAME* ]]
 then
     echo "The Azure Container APP already exists. Updating the Container APP..."
     # Create the container app and deploy the image
-    if (($SH_USE_REDIS)) then
+    if [ "$SH_USE_REDIS" = "true" ]; then
       THERESULT=$(az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname)
     else
       THERESULT=$(az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME)
@@ -537,13 +546,13 @@ else
     # Create the container app and deploy the image
     echo "Running command"
     echo "az containerapp create --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --environment $ENVIRONMENT --image $ACR_NAME.azurecr.io/$IMAGE_NAME --target-port 3500 --ingress 'external' --registry-server $ACR_NAME.azurecr.io --query properties.configuration.ingress.fqdn --registry-password $CPASSWORD --registry-username $CUSERNAME"
-    if (($SH_USE_REDIS)) then
+    if [ "$SH_USE_REDIS" = "true" ]; then
       THERESULT=$(az containerapp create -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --environment $ENVIRONMENT --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname --target-port 3500 --ingress 'external' --registry-server $ACR_NAME.azurecr.io --query properties.configuration.ingress.fqdn --registry-password $CPASSWORD --registry-username $CUSERNAME)
     else
       THERESULT=$(az containerapp create -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --environment $ENVIRONMENT --image $ACR_NAME.azurecr.io/$IMAGE_NAME --target-port 3500 --ingress 'external' --registry-server $ACR_NAME.azurecr.io --query properties.configuration.ingress.fqdn --registry-password $CPASSWORD --registry-username $CUSERNAME)
     fi
     # to do - catch the result of the command and return an error if it fails
-    echo "To do: Act on the result "
+    #echo "To do: Act on the result "
     echo "$THERESULT"
 fi
 ##
