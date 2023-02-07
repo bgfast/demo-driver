@@ -1,5 +1,30 @@
 #!/bin/bash
 
+# setup variables
+LOCATION="westus"
+IMAGE_NAME="album-api-go"
+CONTAINER_APP_NAME="album-api"
+SH_DRIVER_ROOT=$(pwd)
+
+SH_USE_REDIS=false
+SH_SMOKE_TEST_TEXT=""
+# Put the path for the rest endpoint
+SH_SMOKE_TEST_ENDPOINT="orthopedicSurgeries"
+
+UNIQUE_ID="7"
+# Define a container registry name unique to you.
+ACR_NAME="$USERNAME$UNIQUE_ID"
+CUSERNAME=$ACR_NAME
+
+RESOURCE_GROUP="rg-$USERNAME-$UNIQUE_ID"
+ENVIRONMENT="env-album-containerapps"
+
+LOG_INFO=6
+LOG_DEBUG=7
+LOG_TRACE=8
+LOG_LEVEL=$LOG_DEBUG
+LOG_LEVEL=$LOG_INFO
+
 # to do
 ### 1 
 # fix the redis var issue seen on Randy's machine
@@ -43,15 +68,6 @@ if [ "$0" == "$BASH_SOURCE" ]; then
     exit 1
 fi
 
-LOCATION="westus"
-IMAGE_NAME="album-api-go"
-CONTAINER_APP_NAME="album-api"
-SH_DRIVER_ROOT=$(pwd)
-
-SH_USE_REDIS=false
-SH_SMOKE_TEST_TEXT=""
-# Put the path for the rest endpoint
-SH_SMOKE_TEST_ENDPOINT="orthopedicSurgeries"
 
 # to do: make this projects directory code work on any computer
 # to do: create the projects directory if it doesn't exist and create the continer-apps directory
@@ -172,19 +188,6 @@ read_options
 ##
 ##
 
-##FILENAME="https://github.com/Azure-Samples/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
-#ZIPURL="https://github.com/bgfast/containerapps-api-staticfile-javascript/archive/refs/heads/Redis.zip"
-##mkdir ./redis
-##cd ./redis
-##curl -sS http://foo.bar/filename.zip > file.zip
-#echo "Zip URL=$ZIPURL"
-#curl -SL $ZIPURL > file.zip
-#unzip -d . file.zip 
-##rm file.zip
-##cd ./containerapps-albumapi-csharp-main/src
-#pwd
-#########################
-
 ## if the directory does not exist, create it
 #echo "$SH_PROJECTS_ROOT/$SH_PROJECT_ROOT" 
 if [ ! -d "$SH_PROJECTS_ROOT/$SH_PROJECT_ROOT" ]; then
@@ -207,53 +210,11 @@ else
     echo "Successfully unziped file in: $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT"
 fi
 
-#FILENAME="https://github.com/Azure-Samples/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
-#FILENAME="https://github.com/bgfast/containerapps-api-staticfile-javascript/archive/refs/heads/Redis.zip"
-##mkdir ./containerapps-albumapi-csharp
-##cd ./containerapps-albumapi-csharp
-##curl -sS http://foo.bar/filename.zip > file.zip
-#curl -SL $FILENAME > file.zip
-##unzip -d . file.zip 
-
 ##
 ## Done with all the zip work
 ##
 ##
 ########################################################
-
-
-: << 'COMMENT'
-Ideas for log levels
-0 - Emergency (emerg)
-1 - Alerts (alert)
-2 - Critical (crit)
-3 - Errors (err)
-4 - Warnings (warn)
-5 - Notification (notice)
-6 - Information (info)
-7 - Debug (debug) 
-8 - Trace (trace) 
-COMMENT
-
-LOG_INFO=6
-LOG_DEBUG=7
-LOG_TRACE=8
-LOG_LEVEL=$LOG_DEBUG
-LOG_LEVEL=$LOG_INFO
-
-: << 'COMMENT'
-echo -e "\e[1;31m Bold Red \e[0;31m"
-echo -e "\e[31m Red "
-echo "$(tput setaf 0) 0 Gray"
-echo "$(tput setaf 1) 1 Red"
-echo "$(tput setaf 2) 2 Green"
-echo "$(tput setaf 3) 3 Yellow"
-echo "$(tput setaf 4) 4 Blue"
-echo "$(tput setaf 5) 5 Purple"
-echo "$(tput setaf 6) 6 Light Blue"
-echo "$(tput setaf 7) 7 White"
-return 43
-COMMENT
 
 
 #. ./commands.secure.sh
@@ -267,12 +228,6 @@ COMMENT
 #az account set --subscription $SUBSCRIPTIONID
 #az upgrade
 
-: << 'COMMENT'
-This is the first line of a multiline comment
-This is the second line
-echo "Value of X is ${X}"
-X=$((X-1))
-COMMENT
 
 # Next, install or update the Azure Container Apps extension for the CLI.
 #az extension add --name containerapp --upgrade
@@ -282,14 +237,6 @@ COMMENT
 #az provider register --namespace Microsoft.App
 #az provider register --namespace Microsoft.OperationalInsights
 
-#setup environment variables
-UNIQUE_ID="7"
-# Define a container registry name unique to you.
-ACR_NAME="$USERNAME$UNIQUE_ID"
-CUSERNAME=$ACR_NAME
-
-RESOURCE_GROUP="rg-$USERNAME-$UNIQUE_ID"
-ENVIRONMENT="env-album-containerapps"
 
 # https://github.com/Azure-Samples/azure-cli-samples/blob/master/container-registry/create-registry/create-registry-service-principal-assign-role.sh
 # Get the details of the registry 
