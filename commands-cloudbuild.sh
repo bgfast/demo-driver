@@ -9,7 +9,7 @@ SH_DRIVER_ROOT=$(pwd)
 SH_USE_REDIS=false
 # Put the path for the rest endpoint
 
-UNIQUE_ID="9"
+UNIQUE_ID="10"
 # Define a container registry name unique to you.
 ACR_NAME="$USERNAME$UNIQUE_ID"
 CUSERNAME=$ACR_NAME
@@ -90,11 +90,13 @@ pause(){
 
 one(){
 	echo "one() called"
-    ZIPURL="https://github.com/Azure-Samples/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
+    ZIPURL="https://github.com/bgfast/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
+    SH_PROJECT_ROOT="api-csharp"
     SH_WAITING_FOR_MENU_CHOICE=false
     IMAGE_NAME="api-csharp"
-    SH_SMOKE_TEST_ENDPOINT="orthopedicSurgeries"
-    SH_SMOKE_TEST_TEXT=""
+    SH_SMOKE_TEST_ENDPOINT="albums"
+    SH_SMOKE_TEST_TEXT="csharp"
+    SH_ZIP_INSIDE_ROOT="containerapps-albumapi-csharp-main"
     pause
 }
  
