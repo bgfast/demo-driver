@@ -73,20 +73,33 @@ if [ "$0" == "$BASH_SOURCE" ]; then
     exit 1
 fi
 
+pause(){
+  read -p "Press [Enter] key to continue..." fackEnterKey
+}
 
 # to do: make this projects directory code work on any computer
 # to do: create the projects directory if it doesn't exist and create the continer-apps directory
 cd ..
 SH_PROJECTS_ROOT=$(pwd)
-cd $SH_DRIVER_ROOT
+cd "$SH_DRIVER_ROOT"
 # Create the directory if it doesn't exist.
-
 SH_WAITING_FOR_MENU_CHOICE=true
 SH_PROJECT_ROOT="containerapps-api-staticfile-javascript"
 
-pause(){
-  read -p "Press [Enter] key to continue..." fackEnterKey
-}
+# confirm with the user that the subscription is correct
+azlogin=($(az account show --output tsv))
+azsubname=${azlogin[8]}
+aztenantid=${azlogin[1]}
+azsubid=${azlogin[2]}
+echo ""
+echo "Using the following settings: "
+echo "Subscription Name=$azsubname "
+echo "Tenant ID=$aztenantid "
+echo "Subscription ID=$azsubid"
+echo "If this is not the correct subscription, use ctrl-c to cancel this script and run az login and select the correct subscription"
+cd "$SH_DRIVER_ROOT"
+pause
+
 
 one(){
 	echo "one() called"
@@ -95,9 +108,8 @@ one(){
     SH_WAITING_FOR_MENU_CHOICE=false
     IMAGE_NAME="api-csharp"
     SH_SMOKE_TEST_ENDPOINT="albums"
-    SH_SMOKE_TEST_TEXT="csharp"
+    SH_SMOKE_TEST_TEXT="C#"
     SH_ZIP_INSIDE_ROOT="containerapps-albumapi-csharp-main"
-    pause
 }
  
 # do something in two()
@@ -111,7 +123,6 @@ two(){
     SH_SMOKE_TEST_ENDPOINT="orthopedicSurgeriesFromRedis"
     SH_SMOKE_TEST_TEXT="Knee"
     SH_ZIP_INSIDE_ROOT="containerapps-api-staticfile-javascript-Redis"
-    pause
 }
  
 # This is the classic Python Album API sample from bgfast
@@ -124,7 +135,6 @@ three(){
     SH_SMOKE_TEST_ENDPOINT="albums"
     SH_SMOKE_TEST_TEXT="Python"
     SH_ZIP_INSIDE_ROOT="api-python-master"
-    pause
 }
 
 # do something in four()
@@ -136,7 +146,6 @@ four(){
     IMAGE_NAME="album-api-nodejs-redis"
     SH_SMOKE_TEST_ENDPOINT="orthopedicSurgeriesFromRedis"
     SH_SMOKE_TEST_TEXT="Knee"
-    pause
 }
 
 # function to display menus
@@ -235,6 +244,10 @@ fi
 
 
 #az login
+# trim off trailing spaces and newlines
+#azlogin="$(echo -e "${azlogin}" | sed -e 's/[[:space:]]*$//')"
+#echo -e "azlogin='${azlogin}'"
+
 #az account set --subscription $SUBSCRIPTIONID
 #az upgrade
 
@@ -476,11 +489,11 @@ size="C0"
 
 # Create a Basic C0 (256 MB) Redis Cache
 echo "Creating $cache"
-#zzz
 #to do - check if the redis cache already exists and if so, use it
 
 # Get details of an Azure Cache for Redis
 #az redis show --name $cache --resource-group $RESOURCE_GROUP 
+#zzz
 redis=($(az redis show --name $cache --resource-group $RESOURCE_GROUP --query [hostName,enableNonSslPort,port,sslPort] --output tsv))
 if [ "${redis[0]}" = "$cache" ]; then
   echo "The Redis Cache already exists"
@@ -601,7 +614,7 @@ if [[ $CURL_RESULT = *$SH_SMOKE_TEST_TEXT* ]]
 then
     echo "Successfully accessed the API $API_BASE_URL"
 else
-    echo "Failed to access the API $API_BASE_URL"
+    echo "Failed to verify the API results $API_BASE_URL. Could not find $SH_SMOKE_TEST_TEXT in the result."
     echo $CURL_RESULT
 fi
 ##
