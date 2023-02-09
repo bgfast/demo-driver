@@ -119,3 +119,10 @@ COMMENT
 #setup environment variables
 UNIQUE_ID="4"
 ACR_NAME="crbrent$UNIQUE_ID"
+
+# trim off trailing spaces and newlines
+FOO=' test test test '
+FOO_NO_TRAIL_SPACE="$(echo -e "${FOO}" | sed -e 's/[[:space:]]*$//')"
+echo -e "FOO_NO_TRAIL_SPACE='${FOO_NO_TRAIL_SPACE}'"
+# > FOO_NO_TRAIL_SPACE=' test test test'
+echo -e "length(FOO_NO_TRAIL_SPACE)==${#FOO_NO_TRAIL_SPACE}"

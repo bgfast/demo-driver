@@ -2,28 +2,33 @@
 
 # setup variables
 LOCATION="westus"
-IMAGE_NAME="album-api-go"
+# TO Do: change the container app name to something more generic
 CONTAINER_APP_NAME="album-api"
 SH_DRIVER_ROOT=$(pwd)
 
 SH_USE_REDIS=false
-SH_SMOKE_TEST_TEXT=""
 # Put the path for the rest endpoint
-SH_SMOKE_TEST_ENDPOINT="orthopedicSurgeries"
 
-UNIQUE_ID="7"
+UNIQUE_ID="9"
 # Define a container registry name unique to you.
 ACR_NAME="$USERNAME$UNIQUE_ID"
 CUSERNAME=$ACR_NAME
+cache="redis-cache-$ACR_NAME"
 
 RESOURCE_GROUP="rg-$USERNAME-$UNIQUE_ID"
+#RESOURCE_GROUP="rg-containerapp-4"
 ENVIRONMENT="env-album-containerapps"
+
+IMAGE_NAME="TO BE INITIALIZED BY MENU SETUP CODE"
+SH_SMOKE_TEST_ENDPOINT="TO BE INITIALIZED BY MENU SETUP CODE"
+SH_SMOKE_TEST_TEXT="TO BE INITIALIZED BY MENU SETUP CODE"
 
 LOG_INFO=6
 LOG_DEBUG=7
 LOG_TRACE=8
 LOG_LEVEL=$LOG_DEBUG
 LOG_LEVEL=$LOG_INFO
+LOG_LEVEL=$LOG_TRACE
 
 # to do
 ### 1 
@@ -87,7 +92,7 @@ one(){
 	echo "one() called"
     ZIPURL="https://github.com/Azure-Samples/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
     SH_WAITING_FOR_MENU_CHOICE=false
-    IMAGE_NAME="album-api-csharp"
+    IMAGE_NAME="api-csharp"
     SH_SMOKE_TEST_ENDPOINT="orthopedicSurgeries"
     SH_SMOKE_TEST_TEXT=""
     pause
@@ -97,12 +102,13 @@ one(){
 two(){
 	echo "Run the redis cache sample from bgfast"
     ZIPURL="https://github.com/bgfast/containerapps-api-staticfile-javascript/archive/refs/heads/Redis.zip"
-    SH_PROJECT_ROOT="containerapps-api-staticfile-javascript"
+    SH_PROJECT_ROOT="api-nodejs"
     SH_WAITING_FOR_MENU_CHOICE=false
     IMAGE_NAME="album-api-nodejs-redis"
     SH_USE_REDIS=true
     SH_SMOKE_TEST_ENDPOINT="orthopedicSurgeriesFromRedis"
     SH_SMOKE_TEST_TEXT="Knee"
+    SH_ZIP_INSIDE_ROOT="containerapps-api-staticfile-javascript-Redis"
     pause
 }
  
@@ -205,9 +211,11 @@ fi
 
 if [ ! -d "$SH_PROJECTS_ROOT/$SH_PROJECT_ROOT/src" ]; then
     echo "unzip failed to extract in the correct directory: $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT"
+    echo "unzip failed to extract zip from $TMP/file.zip to the correct directory: $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT"
+    cd "$SH_DRIVER_ROOT"
     return 42
 else
-    echo "Successfully unziped file in: $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT"
+    echo "Successfully found project in: $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT"
 fi
 
 ##
@@ -373,15 +381,16 @@ fi
 
 # the cloud build requires the current working directory to be src. This is so the Docker build can find the Dockerfile
 cd "$SH_PROJECTS_ROOT\\$SH_PROJECT_ROOT\src"
-echo "$(tput setaf 2)Performing cloud build of image:$IMAGE_NAME in registry:$ACR_NAME $(tput setaf 7) "
+echo "$(tput setaf 2)Performing cloud build of image:$IMAGE_NAME in registry:$ACR_NAME $(tput setaf 7) from: $(pwd)"
 SH_ACR_BUILD=$(az acr build --registry $ACR_NAME --image $IMAGE_NAME --only-show-errors .)
-$(az acr build --registry $ACR_NAME --image $IMAGE_NAME --no-logs --only-show-errors .)
+
+#$(az acr build --registry $ACR_NAME --image $IMAGE_NAME --no-logs --only-show-errors .)
 if [[ $SH_ACR_BUILD = *successful* ]]
 then
     echo "$(tput setaf 2)Finished successful build $(tput setaf 7) "
 else
     ## to do check the result for errors and output the error messages
-    echo "If this is a python build, it often fails on the pip install command. Try adding the progress bar to the Dockerfile"
+    echo "If this is a python build, it often fails on the pip install command. Try turning off the progress bar in requirements.txt"
     echo "RUN pip install --no-cache-dir --progress-bar off --upgrade -r /code/requirements.txt"
     echo "Build failed: $SH_ACR_BUILD"
     return 42
@@ -451,6 +460,56 @@ fi
 #                   [--resource-group]
 #                   [--subscription]
 
+# Create and manage a C0 Redis Cache
+
+if [ "$SH_USE_REDIS" = "true" ]; then
+# Variable block
+#let "randomIdentifier=$RANDOM*$RANDOM"
+#location="East US"
+#RESOURCE_GROUP="msdocs-redis-cache-rg-$randomIdentifier"
+tag="create-manage-cache"
+cache="redis-cache-$ACR_NAME"
+sku="basic"
+size="C0"
+
+# Create a Basic C0 (256 MB) Redis Cache
+echo "Creating $cache"
+#zzz
+#to do - check if the redis cache already exists and if so, use it
+
+# Get details of an Azure Cache for Redis
+#az redis show --name $cache --resource-group $RESOURCE_GROUP 
+redis=($(az redis show --name $cache --resource-group $RESOURCE_GROUP --query [hostName,enableNonSslPort,port,sslPort] --output tsv))
+if [ "${redis[0]}" = "$cache" ]; then
+  echo "The Redis Cache already exists"
+else
+  echo "Creating the Redis cache of $cache"
+  az redis create --name $cache --resource-group $RESOURCE_GROUP --location "$LOCATION" --sku $sku --vm-size $size
+  # Retrieve the hostname and ports for an Azure Redis Cache instance
+  redis=($(az redis show --name $cache --resource-group $RESOURCE_GROUP --query [hostName,enableNonSslPort,port,sslPort] --output tsv))
+fi
+
+
+# Retrieve the keys for an Azure Redis Cache instance
+keys=($(az redis list-keys --name $cache --resource-group $RESOURCE_GROUP --query [primaryKey,secondaryKey] --output tsv))
+
+# Display the retrieved hostname, keys, and ports
+echo "Hostname:" ${redis[0]}
+SH_REDIS_CACHE_HOSTNAME=${redis[0]}
+# trim off trailing spaces and newlines
+SH_REDIS_CACHE_HOSTNAME="$(echo -e "${SH_REDIS_CACHE_HOSTNAME}" | sed -e 's/[[:space:]]*$//')"
+echo -e "SH_REDIS_CACHE_HOSTNAME='${SH_REDIS_CACHE_HOSTNAME}'"
+echo "Non SSL Port:" ${redis[2]}
+echo "Non SSL Port Enabled:" ${redis[1]}
+echo "SSL Port:" ${redis[3]}
+SH_REDIS_CACHE_KEY=${keys[0]}
+# trim off trailing spaces and newlines
+SH_REDIS_CACHE_KEY="$(echo -e "${SH_REDIS_CACHE_KEY}" | sed -e 's/[[:space:]]*$//')"
+echo -e "SH_REDIS_CACHE_KEY='${SH_REDIS_CACHE_KEY}'"
+echo "Primary Key:" ${keys[0]}
+echo "Secondary Key:" ${keys[1]}
+
+fi
 ##
 ## End Redis create
 ##
@@ -472,8 +531,18 @@ CONTAINER_APP=$(az containerapp show -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP)
 if [[ $CONTAINER_APP = *$CONTAINER_APP_NAME* ]]
 then
     echo "The Azure Container APP already exists. Updating the Container APP..."
-    # Create the container app and deploy the image
+    # Update the container app and deploy the image
     if [ "$SH_USE_REDIS" = "true" ]; then
+      #az container set-credentials --resource-group $resource_group --name $container_group_name --container-name $container_name --subscription $subscription_id --tenant $tenant_id --client-id $client_id --client-secret $client_secret
+      #az container set-credentials --resource-group $RESOURCE_GROUP -n $CONTAINER_APP_NAME --client-id $client_id --client-secret $client_secret
+      #az containerapp secret set -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --secrets $client_id=$client_secret MySecretName2=MySecretValue2
+      #az containerapp secret set -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --secrets $client_id=$client_secret 
+      #THERESULT=$(az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname)
+      # to do: set the revision name on the container app
+      #'ediscachehostname='redis-cache-brentgr7.redis.cache.windows.net
+      #'ediscachekey='QJofBOx9GlISeRJApUCpMeJT00aElkZOGAzCaBJn1ks=
+      #SH_REVISION_NAME="$CONTAINER_APP_NAME--latest"
+      az containerapp secret set -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --secrets rediscachekey=$SH_REDIS_CACHE_KEY rediscachehostname=$SH_REDIS_CACHE_HOSTNAME 
       THERESULT=$(az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname)
     else
       THERESULT=$(az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME)
@@ -491,12 +560,22 @@ else
     # to do - there's a bug on one of the following lines. bash throws and end of file error
 
     # Create the container app and deploy the image
-    echo "Running command"
+    echo "Running command to create the container app"
     echo "az containerapp create --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --environment $ENVIRONMENT --image $ACR_NAME.azurecr.io/$IMAGE_NAME --target-port 3500 --ingress 'external' --registry-server $ACR_NAME.azurecr.io --query properties.configuration.ingress.fqdn --registry-password $CPASSWORD --registry-username $CUSERNAME"
+    THERESULT=$(az containerapp create -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --environment $ENVIRONMENT --image $ACR_NAME.azurecr.io/$IMAGE_NAME --target-port 3500 --ingress 'external' --registry-server $ACR_NAME.azurecr.io --query properties.configuration.ingress.fqdn --registry-password $CPASSWORD --registry-username $CUSERNAME)
     if [ "$SH_USE_REDIS" = "true" ]; then
-      THERESULT=$(az containerapp create -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --environment $ENVIRONMENT --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname --target-port 3500 --ingress 'external' --registry-server $ACR_NAME.azurecr.io --query properties.configuration.ingress.fqdn --registry-password $CPASSWORD --registry-username $CUSERNAME)
-    else
-      THERESULT=$(az containerapp create -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --environment $ENVIRONMENT --image $ACR_NAME.azurecr.io/$IMAGE_NAME --target-port 3500 --ingress 'external' --registry-server $ACR_NAME.azurecr.io --query properties.configuration.ingress.fqdn --registry-password $CPASSWORD --registry-username $CUSERNAME)
+      #THERESULT=$(az containerapp create -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --environment $ENVIRONMENT --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname --target-port 3500 --ingress 'external' --registry-server $ACR_NAME.azurecr.io --query properties.configuration.ingress.fqdn --registry-password $CPASSWORD --registry-username $CUSERNAME)
+      #THERESULT=$(az containerapp create -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --environment $ENVIRONMENT --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname )
+      #az containerapp secret set -n MyContainerapp -g MyResourceGroup --secrets MySecretName1=MySecretValue1 MySecretName2=MySecretValue2
+      #to do: only update the secrets if they don't already exist
+      az containerapp secret set -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --secrets rediscachekey=$SH_REDIS_CACHE_KEY rediscachehostname=$SH_REDIS_CACHE_HOSTNAME 
+      # to do: restart the container app
+      THERESULT=$(az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname)
+      #THERESULT=$(az containerapp update -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/$IMAGE_NAME --set-env-vars rediscachekey=secretref:rediscachekey rediscachehostname=secretref:rediscachehostname)
+      #to do: restart the container app
+      # get the latest revision name?
+      # https://learn.microsoft.com/en-us/cli/azure/containerapp/revision?view=azure-cli-latest#az-containerapp-revision-list
+      #az containerapp revision restart -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP --revision MyContainerappRevision
     fi
     # to do - catch the result of the command and return an error if it fails
     #echo "To do: Act on the result "
@@ -529,3 +608,19 @@ fi
 ##############################################
 
 cd "$SH_DRIVER_ROOT"
+
+: << 'COMMENT'
+2023-02-08T03:35:06.537020660Z Container Apps Node Sample
+2023-02-08T03:35:06.541859408Z Listening on port 3500
+2023-02-08T03:39:10.210627288Z 
+2023-02-08T03:39:10.210688889Z cachePassword QJofBOx9GlISeRJApUCpMeJT00aElkZOGAzCaBJn1ks=
+2023-02-08T03:39:10.210697189Z 
+2023-02-08T03:39:10.210702689Z cacheHostName redis-cache-brentgr7.redis.cache.windows.net
+2023-02-08T03:39:10.262494291Z Retrieved orthopedic surgeries from Redis 
+2023-02-08T03:39:10.268051045Z GET /orthopedicSurgeriesFromRedis 304 56.228 ms - -
+2023-02-08T03:39:10.362803164Z node:internal/process/promises:288
+2023-02-08T03:39:10.362888965Z             triggerUncaughtException(err, true /* fromPromise */);
+2023-02-08T03:39:10.362911165Z             ^
+2023-02-08T03:39:10.362916765Z 
+2023-02-08T03:39:10.362921465Z [ErrorReply: WRONGPASS invalid username-password pair]
+COMMENT
