@@ -9,11 +9,12 @@ SH_DRIVER_ROOT=$(pwd)
 SH_USE_REDIS=false
 # Put the path for the rest endpoint
 
-UNIQUE_ID="10"
+UNIQUE_ID="11"
 # Define a container registry name unique to you.
 ACR_NAME="$USERNAME$UNIQUE_ID"
 CUSERNAME=$ACR_NAME
 cache="redis-cache-$ACR_NAME"
+SH_BICEP=false
 
 RESOURCE_GROUP="rg-$USERNAME-$UNIQUE_ID"
 #RESOURCE_GROUP="rg-containerapp-4"
@@ -148,6 +149,18 @@ four(){
     SH_SMOKE_TEST_TEXT="Knee"
 }
 
+five(){
+    echo "Run the C# Album API sample from bgfast using bicep"
+    ZIPURL="https://github.com/bgfast/containerapps-albumapi-csharp/archive/refs/heads/main.zip"
+    SH_BICEP=true
+    SH_PROJECT_ROOT="api-csharp"
+    SH_WAITING_FOR_MENU_CHOICE=false
+    IMAGE_NAME="api-csharp"
+    SH_SMOKE_TEST_ENDPOINT="albums"
+    SH_SMOKE_TEST_TEXT="C#"
+    SH_ZIP_INSIDE_ROOT="containerapps-albumapi-csharp-main"
+}
+
 # function to display menus
 show_menus() {
 	clear
@@ -164,7 +177,7 @@ show_menus() {
 # invoke the two() when the user select 2 from the menu option.
 # Exit when user the user select 3 form the menu option.
 read_options(){
-    items=("PG-Album API (C#)" "BGFAST-HLS-Redis (nodejs)" "BGFAST-Album Python API" "Item 4" "Show Full Menu" "Quit")
+    items=("PG-Album API (C#)" "BGFAST-HLS-Redis (nodejs)" "BGFAST-Album Python API" "Item 4" "BGFAST-C# API bicep" "Show Full Menu" "Quit")
 
     while $SH_WAITING_FOR_MENU_CHOICE; do
         select item in "${items[@]}" 
@@ -173,7 +186,9 @@ read_options(){
                 1) echo "Selected item #$REPLY"; one; break;;
                 2) echo "Selected item #$REPLY "; two; break;;
                 3) echo "Selected item #$REPLY "; three; break;;
-                4) return 43; break;;
+                4) echo "Selected item #$REPLY "; four; break;;
+                5) echo "Selected item #$REPLY "; five; break;;
+                #4) return 43; break;;
                 $((${#items[@]}+1))) echo "We're done!"; break 2;;
                 *) echo "Ooops - unknown choice $REPLY"; break;
             esac
@@ -199,6 +214,21 @@ read_options(){
 # ------------------------------------
 read_options
 
+bicep_build(){
+    if [ "$SH_BICEP" = "true" ]; then
+      echo "Building the bicep file"
+      #bicep build $SH_PROJECTS_ROOT/$SH_PROJECT_ROOT/azuredeploy.bicep
+      #zzz
+      # cd to the IaC directory
+      cd "$SH_PROJECTS_ROOT\\$SH_PROJECT_ROOT\IaC"
+      echo "$(pwd)"
+
+      # run the bicep build
+      az deployment group create -f ./main-1.bicep -g $RESOURCE_GROUP --parameters location="$LOCATION"
+      cd "$SH_DRIVER_ROOT"
+      return 42
+    fi
+}
 ########################################################
 ##
 ## Start all the zip work
@@ -267,6 +297,21 @@ fi
 # asset_ID=$( curl '...' | jq --raw-output '.AssetID' )
 # https://stackoverflow.com/questions/47018863/parsing-and-storing-the-json-output-of-a-curl-command-in-bash
 #declare -a CIE_ACR
+
+
+##############################################
+##
+## Run bicep build if it exists
+##
+
+bicep_build
+# zzz
+
+##
+##
+##
+##############################################
+
 
 ##############################################
 ##
@@ -493,7 +538,6 @@ echo "Creating $cache"
 
 # Get details of an Azure Cache for Redis
 #az redis show --name $cache --resource-group $RESOURCE_GROUP 
-#zzz
 redis=($(az redis show --name $cache --resource-group $RESOURCE_GROUP --query [hostName,enableNonSslPort,port,sslPort] --output tsv))
 if [ "${redis[0]}" = "$cache" ]; then
   echo "The Redis Cache already exists"
